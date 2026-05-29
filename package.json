@@ -1,0 +1,19 @@
+{
+  "name": "flashpoint-salvage-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "node tests/smoke.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "start": "npm run build && node server.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0",
+    "typescript": "^5.6.3",
+    "vite": "^8.0.14"
+  }
+}
