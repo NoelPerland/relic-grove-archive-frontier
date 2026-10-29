@@ -30,11 +30,14 @@ async function waitForServer() {
 async function main() {
   await server.listen();
   await waitForServer();
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROME || undefined });
   const page = await browser.newPage({ viewport: { width: 1365, height: 768 }, deviceScaleFactor: 1 });
   const errors = [];
+  page.on("response", (response) => {
+    if (response.status() >= 400) errors.push(`${response.status()}: ${response.url()}`);
+  });
   page.on("console", (msg) => {
-    if (["error", "warning"].includes(msg.type())) errors.push(`${msg.type()}: ${msg.text()}`);
+    if (["error", "warning"].includes(msg.type())) errors.push(`${msg.type()}: ${msg.text()} @ ${msg.location().url}`);
   });
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
 

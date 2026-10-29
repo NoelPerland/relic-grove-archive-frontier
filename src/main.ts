@@ -122,7 +122,8 @@ let muted = false;
 let reducedMotion = false;
 let audioReady = false;
 let audio: AudioContext | null = null;
-const music = new Audio("/assets/adventure-medieval-fantasy.mp3");
+const asset = (name: string) => `${import.meta.env.BASE_URL}assets/${name}`;
+const music = new Audio(asset("adventure-medieval-fantasy.mp3"));
 music.loop = true;
 music.volume = 0.22;
 music.preload = "auto";
@@ -132,14 +133,14 @@ let bossDefeated = false;
 let bestLevel = Number(localStorage.getItem("relic-grove-best-level") || 1);
 let bestClear = localStorage.getItem("relic-grove-boss-clear") === "true";
 
-const heroSheet = image("/assets/hero-rpg-sheet.png");
-const enemySheet = image("/assets/enemy-sheet.png");
-const bossSheet = image("/assets/boss-golem-sheet.png");
-const tileset = image("/assets/tileset-grove.png");
-const itemIcons = image("/assets/item-icons.png");
-const terrainProps = image("/assets/terrain-props.png");
-const lakeProp = image("/assets/lake-prop.png");
-const campShop = image("/assets/camp-shop-opaque.png");
+const heroSheet = image(asset("hero-rpg-sheet.png"));
+const enemySheet = image(asset("enemy-sheet.png"));
+const bossSheet = image(asset("boss-golem-sheet.png"));
+const tileset = image(asset("tileset-grove.png"));
+const itemIcons = image(asset("item-icons.png"));
+const terrainProps = image(asset("terrain-props.png"));
+const lakeProp = image(asset("lake-prop.png"));
+const campShop = image(asset("camp-shop-opaque.png"));
 
 const HERO_FRAME_RECTS: Partial<Record<number, { sx: number; sy: number; sw: number; sh: number; scale: number }>> = {
   0: { sx: 88, sy: 22, sw: 150, sh: 170, scale: 0.64 },
