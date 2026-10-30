@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {chromium} from 'playwright';
+import {createServer} from 'vite';
+const server=await createServer({server:{port:5187},plugins:[{name:'qa-input',transform(code,id){if(id.endsWith('/src/main.ts'))return code+'\nwindow.__inputTest={keys,pointer,get player(){return player},gainXp,get mode(){return mode},killEnemy,get bestClear(){return bestClear}};';}}]});
+await server.listen();const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROME || 'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true});
+try{for(const failure of ['none','blocked','full']) {
+const context=await browser.newContext();await context.addInitScript(mode=>{if(mode==='blocked')Object.defineProperty(window,'localStorage',{get(){throw new DOMException('blocked','SecurityError')}});if(mode==='full')Storage.prototype.setItem=function(){throw new DOMException('full','QuotaExceededError')};},failure);
+const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://localhost:5187');await page.click('#primary');
+const before=await page.evaluate(()=>window.__inputTest.player.x);await page.keyboard.down('d');await page.waitForTimeout(200);assert((await page.evaluate(()=>window.__inputTest.player.x))>before);await page.evaluate(()=>window.dispatchEvent(new Event('blur')));assert.equal(await page.evaluate(()=>window.__inputTest.keys.size),0);await page.keyboard.up('d');
+await page.evaluate(()=>{window.__inputTest.pointer.down=true;window.dispatchEvent(new PointerEvent('pointerup'))});assert.equal(await page.evaluate(()=>window.__inputTest.pointer.down),false);
+await page.keyboard.press('p');assert.equal(await page.evaluate(()=>window.__inputTest.mode),'paused');const pausedX=await page.evaluate(()=>window.__inputTest.player.x);await page.keyboard.down('d');await page.waitForTimeout(200);assert.equal(await page.evaluate(()=>window.__inputTest.player.x),pausedX);await page.keyboard.up('d');await page.keyboard.press('p');
+await page.evaluate(()=>window.__inputTest.gainXp(100));assert((await page.evaluate(()=>window.__inputTest.player.level))>1);await page.evaluate(()=>window.__inputTest.killEnemy({alive:true,hp:1,kind:'golem',xp:1,gold:1,x:500,y:500}));assert.equal(await page.evaluate(()=>window.__inputTest.bestClear),true);await page.keyboard.press('r');assert.equal(await page.evaluate(()=>window.__inputTest.player.level),1);assert.deepEqual(errors,[]);console.log(failure,'movement, focus/pointer release, pause freeze, level-up/restart pass');await context.close();
+}}finally{await browser.close();await server.close()}

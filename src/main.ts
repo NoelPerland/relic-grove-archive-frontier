@@ -130,8 +130,17 @@ music.preload = "auto";
 let shake = 0;
 let bossSpawned = false;
 let bossDefeated = false;
-let bestLevel = Number(localStorage.getItem("relic-grove-best-level") || 1);
-let bestClear = localStorage.getItem("relic-grove-boss-clear") === "true";
+function readProgress(key: string) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function writeProgress(key: string, value: string) {
+  try { localStorage.setItem(key, value); } catch {
+    // Current run remains playable when browser storage is blocked or full.
+  }
+}
+const savedLevel = Number(readProgress("relic-grove-best-level"));
+let bestLevel = Number.isFinite(savedLevel) ? Math.max(1, Math.floor(savedLevel)) : 1;
+let bestClear = readProgress("relic-grove-boss-clear") === "true";
 
 const heroSheet = image(asset("hero-rpg-sheet.png"));
 const enemySheet = image(asset("enemy-sheet.png"));
@@ -595,7 +604,7 @@ function killEnemy(enemy: Enemy) {
   if (enemy.kind === "golem") {
     bossDefeated = true;
     bestClear = true;
-    localStorage.setItem("relic-grove-boss-clear", "true");
+    writeProgress("relic-grove-boss-clear", "true");
     dropLoot(enemy.x, enemy.y, "relic", 1);
     player.gold += 100;
     player.shards += 12;
@@ -661,7 +670,7 @@ function gainXp(amount: number) {
     player.maxHp += 6;
     player.hp = player.maxHp;
     bestLevel = Math.max(bestLevel, player.level);
-    localStorage.setItem("relic-grove-best-level", String(bestLevel));
+    writeProgress("relic-grove-best-level", String(bestLevel));
     float(`LEVEL ${player.level}`, player.x, player.y - 64, "#ffdc63");
     burst(player.x, player.y, 45, "#ffdc63");
   }
@@ -952,7 +961,9 @@ function drawSortedActors() {
 }
 
 function drawGate() {
-  drawTileset(1020, 575, 500, 285, BOSS_GATE.x - 250, BOSS_GATE.y - 120, 500, 285);
+  // Include both spires and outer pillars while keeping the gate's ground anchor.
+  drawTileset(1135, 540, 210, 50, BOSS_GATE.x - 117, BOSS_GATE.y - 157, 210, 50);
+  drawTileset(978, 590, 548, 272, BOSS_GATE.x - 274, BOSS_GATE.y - 107, 548, 272);
 }
 
 function drawObstacle(obstacle: Circle) {
@@ -1162,6 +1173,7 @@ function drawPlayer() {
 }
 
 function drawHeroFrame(frame: number, mirror = false) {
+  // The sheet has east-facing side frames only; west intentionally mirrors them.
   const rect = HERO_FRAME_RECTS[frame];
   if (!rect || !heroSheet.complete || heroSheet.naturalWidth <= 0) {
     if (mirror) {
@@ -1462,6 +1474,17 @@ window.addEventListener("keydown", (event) => {
   if (key === "p") togglePause();
 });
 window.addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
+
+function releaseInput() {
+  keys.clear();
+  pointer.down = false;
+}
+window.addEventListener("blur", releaseInput);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) releaseInput();
+});
+window.addEventListener("pointerup", () => { pointer.down = false; });
+canvas.addEventListener("pointercancel", () => { pointer.down = false; });
 
 canvas.addEventListener("pointermove", (event) => {
   const world = worldFromScreen(event.clientX, event.clientY);

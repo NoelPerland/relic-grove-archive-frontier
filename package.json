@@ -7,9 +7,11 @@
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "test": "node tests/smoke.mjs",
+    "test": "node tests/input.mjs && node tests/smoke.mjs",
     "preview": "vite preview --host 127.0.0.1",
-    "start": "npm run build && node server.js"
+    "start": "npm run build && node server.js",
+    "test:visual": "node tests/visual.mjs",
+    "test:input-browser": "node tests/input-browser.mjs"
   },
   "devDependencies": {
     "playwright": "^1.60.0",
